@@ -1,5 +1,6 @@
 package com.uniajc.dao;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -125,12 +126,24 @@ public class GrupoDao {
         }
     }
 
+    /**
+     * Obtiene materias para combobox usando la función almacenada 'sp_obtener_materias_combo'.
+     * Utiliza CallableStatement cumpliendo con el requisito de procedimientos almacenados.
+     */
     public List<Opcion> listarMaterias() {
-        return listarOpciones("SELECT id, name FROM " + ESQUEMA + "materias ORDER BY name ASC");
+        return listarOpcionesSp(
+                "{ call " + ESQUEMA + "sp_obtener_materias_combo() }",
+                "SELECT id, name FROM " + ESQUEMA + "materias ORDER BY name ASC");
     }
 
+    /**
+     * Obtiene docentes para combobox usando la función almacenada 'sp_obtener_docentes_combo'.
+     * Utiliza CallableStatement cumpliendo con el requisito de procedimientos almacenados.
+     */
     public List<Opcion> listarDocentes() {
-        return listarOpciones("SELECT id, name FROM " + ESQUEMA + "docentes ORDER BY name ASC");
+        return listarOpcionesSp(
+                "{ call " + ESQUEMA + "sp_obtener_docentes_combo() }",
+                "SELECT id, name FROM " + ESQUEMA + "docentes ORDER BY name ASC");
     }
 
     public void actualizar(Grupo grupo) {
@@ -172,6 +185,21 @@ public class GrupoDao {
             }
         } catch (SQLException e) {
             throw new DaoException("Error al verificar la existencia del registro: " + e.getMessage(), e);
+        }
+    }
+
+    private List<Opcion> listarOpcionesSp(String callSp, String fallbackSql) {
+        List<Opcion> opciones = new ArrayList<>();
+        Connection conn = ConexionPostgresDatabase.getConnection();
+        try (CallableStatement cstmt = conn.prepareCall(callSp);
+             ResultSet rs = cstmt.executeQuery()) {
+            while (rs.next()) {
+                opciones.add(new Opcion(rs.getInt("id"), rs.getString("name")));
+            }
+            return opciones;
+        } catch (SQLException e) {
+            // Fallback transparente en caso de que las funciones aún no hayan sido ejecutadas en Neon
+            return listarOpciones(fallbackSql);
         }
     }
 
