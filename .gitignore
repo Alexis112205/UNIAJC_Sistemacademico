@@ -1,0 +1,4 @@
+target/
+lib/
+*.properties
+!*.properties.example
