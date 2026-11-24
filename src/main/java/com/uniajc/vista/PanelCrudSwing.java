@@ -2,6 +2,7 @@ package com.uniajc.vista;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -32,7 +33,7 @@ public abstract class PanelCrudSwing<T> extends JPanel {
     protected static final Color COLOR_SECUNDARIO = new Color(236, 240, 241);
     protected static final Color COLOR_EXITO = new Color(39, 174, 96);
     protected static final Color COLOR_PELIGRO = new Color(231, 76, 60);
-    protected static final Color COLOR_NEUTRO = new Color(127, 140, 141);
+    protected static final Color COLOR_NEUTRO = new Color(75, 85, 99);
 
     public interface Formulario {
         Map<String, JComponent> campos();
@@ -128,12 +129,16 @@ public abstract class PanelCrudSwing<T> extends JPanel {
         }
     }
 
-    protected JButton crearBoton(String texto, Color fondo) {
+    protected JButton crearBoton(String texto, Color color) {
         JButton boton = new JButton(texto);
-        boton.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        boton.setBackground(fondo);
-        boton.setForeground(Color.WHITE);
+        boton.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        boton.setBackground(Color.WHITE);
+        boton.setForeground(color);
+        boton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(color, 2),
+                BorderFactory.createEmptyBorder(6, 16, 6, 16)));
         boton.setFocusPainted(false);
+        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return boton;
     }
 

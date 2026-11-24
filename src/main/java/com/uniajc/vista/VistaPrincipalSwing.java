@@ -64,7 +64,11 @@ public class VistaPrincipalSwing extends JFrame {
             boton.setFont(new Font("Segoe UI", Font.BOLD, 13));
             boton.setBackground(Color.WHITE);
             boton.setForeground(COLOR_PRIMARIO);
+            boton.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(Color.WHITE, 1),
+                    BorderFactory.createEmptyBorder(8, 12, 8, 12)));
             boton.setFocusPainted(false);
+            boton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
             boton.addActionListener(e -> mostrar(nombre));
             menu.add(boton);
         }
