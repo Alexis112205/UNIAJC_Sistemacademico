@@ -25,6 +25,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 public abstract class PanelCrudSwing<T> extends JPanel {
@@ -81,9 +82,15 @@ public abstract class PanelCrudSwing<T> extends JPanel {
         tabla.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         tabla.setRowHeight(25);
         tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        tabla.getTableHeader().setBackground(COLOR_PRIMARIO);
-        tabla.getTableHeader().setForeground(Color.WHITE);
+        DefaultTableCellRenderer renderEncabezado = new DefaultTableCellRenderer();
+        renderEncabezado.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        renderEncabezado.setBackground(COLOR_PRIMARIO);
+        renderEncabezado.setForeground(Color.WHITE);
+        renderEncabezado.setHorizontalAlignment(JLabel.CENTER);
+        renderEncabezado.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 1, Color.LIGHT_GRAY),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        tabla.getTableHeader().setDefaultRenderer(renderEncabezado);
         JScrollPane desplazamiento = new JScrollPane(tabla);
         desplazamiento.setBorder(BorderFactory.createLineBorder(COLOR_PRIMARIO, 2));
         add(desplazamiento, BorderLayout.CENTER);

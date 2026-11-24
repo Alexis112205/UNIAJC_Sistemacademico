@@ -4,9 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.util.Arrays;
 import java.util.Properties;
 
 public class ConexionPostgresDatabase {
@@ -42,16 +48,92 @@ public class ConexionPostgresDatabase {
 
     private static Connection abrirConexion() {
         Properties propiedades = cargarPropiedades();
+        asegurarDriver();
         try {
-            Class.forName("org.postgresql.Driver");
             return DriverManager.getConnection(
                     propiedades.getProperty("URL"),
                     propiedades.getProperty("USERNAME"),
                     propiedades.getProperty("PASSWORD"));
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Driver de PostgreSQL no encontrado.", e);
         } catch (SQLException e) {
             throw new IllegalStateException("Error al conectar con la base de datos: " + e.getMessage(), e);
+        }
+    }
+
+    private static void asegurarDriver() {
+        try {
+            Class.forName("org.postgresql.Driver");
+            return;
+        } catch (ClassNotFoundException ignored) {
+        }
+        File[] candidatos = new File[] {
+            new File("lib/postgresql-42.7.13.jar"),
+            new File("lib"),
+            new File(System.getProperty("user.home"), ".m2/repository/org/postgresql/postgresql/42.7.13/postgresql-42.7.13.jar")
+        };
+        for (File candidato : candidatos) {
+            if (candidato.exists()) {
+                File jar = candidato.isDirectory()
+                        ? Arrays.stream(candidato.listFiles((d, n) -> n.startsWith("postgresql") && n.endsWith(".jar")))
+                                .findFirst().orElse(null)
+                        : candidato;
+                if (jar != null && jar.exists()) {
+                    try {
+                        URLClassLoader loader = new URLClassLoader(
+                                new URL[] { jar.toURI().toURL() },
+                                ConexionPostgresDatabase.class.getClassLoader());
+                        Driver driver = (Driver) Class.forName("org.postgresql.Driver", true, loader)
+                                .getDeclaredConstructor().newInstance();
+                        DriverManager.registerDriver(new DriverShim(driver));
+                        return;
+                    } catch (Exception ex) {
+                        // continuar intentando otros candidatos
+                    }
+                }
+            }
+        }
+        throw new IllegalStateException("Driver de PostgreSQL no encontrado. Verifique la carpeta lib o dependencias Maven.");
+    }
+
+    private static class DriverShim implements Driver {
+        private final Driver driver;
+
+        DriverShim(Driver d) {
+            this.driver = d;
+        }
+
+        @Override
+        public boolean acceptsURL(String u) throws SQLException {
+            return driver.acceptsURL(u);
+        }
+
+        @Override
+        public Connection connect(String u, Properties p) throws SQLException {
+            return driver.connect(u, p);
+        }
+
+        @Override
+        public int getMajorVersion() {
+            return driver.getMajorVersion();
+        }
+
+        @Override
+        public int getMinorVersion() {
+            return driver.getMinorVersion();
+        }
+
+        @Override
+        public DriverPropertyInfo[] getPropertyInfo(String u, Properties p) throws SQLException {
+            return driver.getPropertyInfo(u, p);
+        }
+
+        @Override
+        public boolean jdbcCompliant() {
+            return driver.jdbcCompliant();
+        }
+
+        @Override
+        public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+            return driver.getParentLogger();
         }
     }
 
